@@ -1,0 +1,180 @@
+---
+title: "Homework1"
+author: "Linlin Tian"
+date: "9/22/2018"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Problem 3
+
+```{r p3.a}
+set.seed(1)
+x <- rnorm(100)
+```
+
+```{r p3.b}
+eps <- rnorm(100, 0, sqrt(0.25))
+```
+
+```{r p3.c}
+y <- -1 + 0.5 * x + eps
+length(y)
+```
+The length of vector y is 100, $\beta_0 = -1, \beta_1 = 0.5$.
+
+```{r p3.d}
+plot(x, y, xlab = "X", ylab = "Y")
+```
+The scatterplot shows that there is a linear correlation hidden between X and Y.
+
+```{r p3.e}
+lm.fit = lm(y~x)
+summary(lm.fit)
+```
+
+The p-value is very small, there is a linear correlation between x and y.
+The coefficient are almost exactly the same to the original $\beta_0$ and $\beta_1$ value. When $\beta_0 = -1.01885$ and $\beta_1 = 0.49947$.
+
+```{r p3.f}
+plot(x, y)
+abline(lm.fit, lwd = 1, col = 1)
+abline(-1, 0.5, lwd = 2, col = 2)
+legend(0.75, -2, legend = c("Least Square Line", "pop. regression"), col = 2 : 2, lwd = 2 : 2, cex = 1)
+```
+
+```{r p3.g}
+lm.fit_sq = lm(y~x + I(x^2))
+summary(lm.fit_sq)
+```
+
+It seems like there is no relationship between y and $x^2$.
+Adjusted R-squared:  0.4674 for linear model
+Adjusted R-squared:  0.4779 for polynomial model
+The R-squared value is almost the same, a little bit high than that of linear model. The original model is linear, then extra parameters does not help.
+
+```{r p3.h}
+set.seed(1)
+x1 = rnorm(100)
+eps1 = rnorm(100, 0, 0.1)
+y1 = -1 + 0.5 * x1 + eps1
+lm.fit1 = lm(y1~x1)
+summary(lm.fit1)
+```
+
+```{r p3.h2}
+plot(x1, y1,xlab="X",ylab = "Y")
+abline(lm.fit1, lwd=1, col=1)
+abline(-1, 0.5, lwd=2, col=2)
+legend(1,-1.75, legend = c("Least Square Line", "population regression"), col = 1 : 2, lwd = 1 : 2, cex = 1)
+```
+
+The result of decreasing noise is the linear regression model more closely align to the original model. When the error in $R^2$ and RSE decresed.
+
+```{r p3.i}
+set.seed(1)
+x2 = rnorm(100)
+eps2 = rnorm(100, 0, 0.5)
+y2 = -1 + 0.5 * x2 + eps2
+lm.fit2 = lm(y2~x2)
+summary(lm.fit2)
+```
+
+
+```{r p3.i2}
+plot(x2, y2, xlab="X",ylab = "Y")
+abline(lm.fit2, lwd=1, col=1)
+abline(-1, 0.5, lwd=2, col=2)
+legend(1,-1.75, legend = c("Least Square Line", "pop. regression"), col = 1 : 2, lwd = 1 : 2, cex = 1)
+```
+
+The result of decreasing noise is the linear regression model less closely align to the original model. When the error in $R^2$ and RSE increased.
+
+```{r p3.j}
+confint(lm.fit)
+confint(lm.fit1)
+confint(lm.fit2)
+```
+
+The second model gives the best result, while the third model gives the worst result.
+
+
+Problem 5
+```{r}
+w1 <- read.csv(file="advertising.csv",head=TRUE)
+sale <- w1$sales
+tv <- w1$TV
+newspaper <- w1$newspaper
+radio <- w1$radio
+```
+
+```{r p4.news}
+lm.fitNews <- lm(sale ~ newspaper)
+summary(lm.fitNews)
+plot(newspaper, sale, xlab = "TV", ylab = "Sales")
+abline(lm.fitNews)
+
+conf_TV<-confint(lm.fitNews,level = 0.92)
+abline(coef=conf_TV[,1],lty=2,col=2)
+abline(coef=conf_TV[,2],lty=2,col=3)
+```
+
+```{r p4.tv}
+
+lm.fitTV <- lm(sale ~ tv)
+summary(lm.fitTV)
+plot(tv, sale, xlab = "TV", ylab = "Sales")
+abline(lm.fitTV)
+
+conf_TV<-confint(lm.fitTV,level = 0.92)
+abline(coef=conf_TV[,1],lty=2,col=2)
+abline(coef=conf_TV[,2],lty=2,col=3)
+#dev.off()
+```
+
+
+```{r p4.radio}
+lm.fitRadio <- lm(sale ~ radio)
+summary(lm.fitRadio)
+plot(radio, sale, xlab = "TV", ylab = "Sales")
+abline(lm.fitRadio)
+
+conf_TV<-confint(lm.fitRadio,level = 0.92)
+abline(coef=conf_TV[,1],lty=2,col=2)
+abline(coef=conf_TV[,2],lty=2,col=3)
+```
+
+
+```{r P5.a}
+p5<-read.csv(file="auto.csv", header=T)
+pairs(p5)
+sapply(p5,class)
+```
+
+```{r P5.b}
+correlation.p5<-cor(p5[sapply(p5, is.numeric)])
+print(correlation.p5)
+```
+
+```{r P5.c}
+lm.fit51 = lm(mpg~.-name, data=p5)
+summary(lm.fit51)
+```
+i. The p-value is small, some predictors have relationships with response. While some predictors seems to have no relationships with response.
+
+ii. The displacement, weight, year, and origin has a significant relationship to the response, by comparing p-values and t-statistics.
+
+iii. The year suggests that the old car tends to have larger mpg and they use more fuel.
+
+
+```{r P5.d}
+lm.fit52 = lm(log(p5$mpg)~log(p5$displacement)+sqrt(p5$horsepower)+I(p5$weight^2)+(p5$acceleration)+(p5$year)+(p5$origin))
+summary(lm.fit52)
+```
+
+The result varies a lot from previous model, which shows that pre-processing method is important and affects the result. After pre-processing, this model fits better.
