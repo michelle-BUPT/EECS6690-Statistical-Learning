@@ -1,0 +1,322 @@
+---
+title: "Homework2"
+author: "Linlin Tian"
+date: "10/5/2018"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problem 2
+```{r p2a}
+y1 <- 1
+lambda <- 1
+beta1 <- seq(-5, 5, 0.01)
+ridge <- (y1 - beta1)^2 + lambda * beta1^2
+sol <- y1 / (1 + lambda)
+sol_ridge <- (y1 - sol)^2 + lambda * sol^2
+plot(beta1, ridge, type="l", xlab = "beta1", ylab = "objevtive function", xlim=c(-2,3), ylim=c(0,10), cex.lab=1.5)
+points(sol, sol_ridge, col="red")
+```
+
+
+```{r p2b}
+y2 <- 1
+lambda2 <- 1
+beta2 <- seq(-5, 5, 0.01)
+lasso <- (y2 - beta2)^2 + lambda2 * abs(beta2)
+sol2 <- y2 - lambda2 / 2
+sol2_lasso <- (y2 - sol2)^2 + lambda2 * abs(sol2)
+plot(beta2, lasso, type="l", xlab = "beta1", ylab = "objevtive function", xlim=c(-2,3), ylim=c(0,10), cex.lab=1.5)
+points(sol, sol2_lasso, col="red")
+
+```
+
+## Problem 4
+```{r p4a}
+set.seed(1)
+x <- rnorm(100)
+eps <- rnorm(100)
+```
+
+```{r p4b}
+beta0 <- 1
+beta1 <- 1
+beta2 <- -1
+beta3 <- 0.1
+y <- beta0 + beta1 * x + beta2 * x^2 + beta3 * x^3 + eps
+```
+
+leaps() performs an exhaustive search for the best subsets of the variables in x for predicting y in linear regression, using an efficient branch-and-bound algorithm.
+```{r p4c}
+library(leaps)
+data1 <- data.frame(y = y, x = x)
+model <- regsubsets(y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10), data = data1, nvmax = 10)
+summary_model <- summary(model)
+
+plot(summary_model$cp, xlab = "parameters", ylab = "Cp", type = "l")
+points(which.min(summary_model$cp),summary_model$cp[which.min(summary_model$cp)], col = "red")
+
+plot(summary_model$bic, xlab = "parameters", ylab = "BIC", type = "l")
+points(which.min(summary_model$bic), summary_model$bic[which.min(summary_model$bic)], col = "red")
+
+plot(summary_model$adjr2, xlab = "parameters", ylab = "R2", type = "l")
+points(which.max(summary_model$adjr2), summary_model$adjr2[which.max(summary_model$adjr2)], col = "red")
+
+which.min(summary_model$cp)
+which.min(summary_model$bic)
+which.max(summary_model$adjr2)
+
+coefficients(model, id = 3)
+
+```
+
+$X^9$ is the best model.
+
+```{r p4d}
+model_forward <- regsubsets(y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10), data = data1, nvmax = 10, method = "forward")
+
+model_backward <- regsubsets(y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10), data = data1, nvmax = 10, method = "backward")
+
+summary_forward <- summary(model_forward)
+summary_backward <- summary(model_backward)
+
+which.min(summary_forward$cp)
+which.min(summary_backward$cp)
+
+which.min(summary_forward$bic)
+which.min(summary_backward$bic)
+
+which.max(summary_forward$adjr2)
+which.max(summary_backward$adjr2)
+
+plot(summary_forward$cp, xlab = "parameters", ylab = "Cp", type = "l")
+points(which.min(summary_forward$cp),summary_forward$cp[which.min(summary_forward$cp)], col = "red")
+
+plot(summary_backward$cp, xlab = "parameters", ylab = "Cp", type = "l")
+points(which.min(summary_backward$cp),summary_backward$cp[which.min(summary_backward$cp)], col = "red")
+
+
+plot(summary_forward$bic, xlab = "parameters", ylab = "BIC", type = "l")
+points(which.min(summary_forward$bic), summary_forward$bic[which.min(summary_forward$bic)], col = "red")
+
+plot(summary_backward$bic, xlab = "parameters", ylab = "BIC", type = "l")
+points(which.min(summary_backward$bic), summary_backward$bic[which.min(summary_backward$bic)], col = "red")
+
+
+plot(summary_forward$adjr2, xlab = "parameters", ylab = "R2", type = "l")
+points(which.max(summary_forward$adjr2), summary_forward$adjr2[which.max(summary_forward$adjr2)], col = "red")
+
+plot(summary_backward$adjr2, xlab = "parameters", ylab = "R2", type = "l")
+points(which.max(summary_backward$adjr2), summary_backward$adjr2[which.max(summary_backward$adjr2)], col = "red")
+
+
+coefficients(model_forward, id = 3)
+coefficients(model_backward, id = 3)
+```
+ALl the models picks $X^9$.
+
+```{r p4e}
+library(glmnet)
+xdata <- model.matrix(y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10), data = data1)
+
+model_lasso <- cv.glmnet(xdata, y, alpha = 1)
+plot(model_lasso)
+
+parameter <- model_lasso$lambda.min
+print(parameter)
+
+model_best <- glmnet(xdata, y, alpha = 1)
+predict(model_best, s = parameter, type = "coefficients")
+
+```
+It also picks $X^9$.
+
+```{r p4f1}
+beta7 <- 7
+y1 <- beta0 + beta7 * x^7 + eps
+data2 <- data.frame(y = y1, x = x)
+model1 <- regsubsets(y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10), data = data2, nvmax = 10)
+summary_model1 <- summary(model1)
+
+plot(summary_model1$cp, xlab = "parameters", ylab = "Cp", type = "l")
+points(which.min(summary_model1$cp),summary_model1$cp[which.min(summary_model1$cp)], col = "red")
+
+plot(summary_model1$bic, xlab = "parameters", ylab = "BIC", type = "l")
+points(which.min(summary_model1$bic), summary_model1$bic[which.min(summary_model1$bic)], col = "red")
+
+plot(summary_model1$adjr2, xlab = "parameters", ylab = "R2", type = "l")
+points(which.max(summary_model1$adjr2), summary_model1$adjr2[which.max(summary_model1$adjr2)], col = "red")
+
+coefficients(model1, id = 3)
+
+which.min(summary_model1$cp)
+which.min(summary_model1$bic)
+which.max(summary_model1$adjr2)
+
+
+```
+BIC picks the most accurate result, while other also pick other variables.
+
+```{r p4f2}
+xdata2 <- model.matrix(y ~ x + I(x^2) + I(x^3) + I(x^4) + I(x^5) + I(x^6) + I(x^7) + I(x^8) + I(x^9) + I(x^10), data = data2)
+
+model_lasso2 <- cv.glmnet(xdata2, y1, alpha = 1)
+plot(model_lasso2)
+
+parameter2 <- model_lasso2$lambda.min
+print(parameter2)
+
+model_best2 <- glmnet(xdata2, y1, alpha = 1)
+predict(model_best2, s = parameter, type = "coefficients")
+
+```
+Lasso also pick the most accurate result.
+
+## Problem 5
+```{r p5a}
+library(ISLR)
+data(College)
+
+size_train = sample(1:dim(College)[1], dim(College)[1] / 2)
+size_test <- -size_train
+data_train <- College[size_train, ]
+data_test <- College[size_test, ]
+```
+
+```{r p5b}
+model_lm <- lm(Apps ~ ., data = data_train)
+pred_lm<- predict(model_lm, data_test)
+mean((pred_lm - data_test$Apps)^2)
+```
+
+```{r p5c}
+#library(glmnet)
+matrix_train <- model.matrix(Apps ~ ., data = data_train)
+matrix_test <- model.matrix(Apps ~ ., data = data_test)
+myline <- 10 ^ seq(2, -2, length = 100)
+
+model_ridge <- cv.glmnet(matrix_train, data_train$Apps, alpha = 0, lambda = myline, thresh = 1e-10)
+plot(model_ridge)
+
+parameter <- model_ridge$lambda.min
+print(parameter)
+
+pred_ridge <- predict(model_ridge, s = parameter, newx = matrix_test)
+mean((pred_ridge - data_test$Apps)^2)
+
+```
+The test RSS is higher.
+
+```{r p5d}
+model_lasso <- cv.glmnet(matrix_train, data_train$Apps, alpha = 1, lambda = myline, thresh = 1e-10)
+plot(model_lasso)
+
+parameter1 <- model_lasso$lambda.min
+print(parameter1)
+
+pred_lasso <- predict(model_lasso, s = parameter, newx = matrix_test)
+mean((pred_lasso - data_test$Apps)^2)
+
+mod_lasso <- glmnet(matrix_train, data_train$Apps, alpha = 1)
+predict(mod_lasso, s = parameter1, type = "coefficients")
+
+```
+The RSS is also higher.
+
+
+## Problem 6
+```{r p6a}
+set.seed(1)
+p <- 20
+n <- 1000
+x <- matrix(rnorm(n * p), n, p)
+b <- rnorm(p)
+b[1] <- 0
+b[3] <- 0
+b[5] <- 0
+eps <- rnorm(p)
+y <- x %*% b + eps
+```
+
+```{r p6b}
+train <- sample(seq(1000), 100, replace = FALSE)
+test <- -train
+
+train_x <- x[train, ]
+test_x <- x[test, ]
+train_y <- y[train]
+test_y <- y[test]
+```
+
+
+```{r p6c}
+library(leaps)
+trainset <- data.frame(y = train_y, x = train_x)
+regmodel <- regsubsets(y ~ ., data = trainset,nvmax = p)
+errors <- rep(NA, p)
+
+trainmatrix <- model.matrix(y ~ ., data = trainset,nvmax=20)
+
+for (i in 1:p) {
+    para <- coef(regmodel, id = i)
+    pred <- trainmatrix[, names(para)] %*% para
+    errors[i] <- mean((pred - train_y)^2)
+}
+plot(errors, type = "b")
+```
+
+
+```{r p6d}
+testset <- data.frame(y = test_y, x = test_x)
+testmatrix <- model.matrix(y ~ ., data = testset, nvmax = 20)
+errors <- rep(NA, p)
+
+for (i in 1:p) {
+    para <- coef(regmodel, id = i)
+    pred <- testmatrix[, names(para)] %*% para
+    errors[i] <- mean((pred - test_y)^2)
+}
+plot(errors ,type = "b")
+```
+
+```{r p6e}
+which.min(errors)
+```
+The model with 17 parameter has the smallest MSE.
+
+```{r p6f}
+coef(regmodel, id = 17)
+```
+When j equals to 7, we got minimum error which is not the same as the result in {f}.
+
+```{r p6g}
+errors <- rep(NA, p)
+#a <- rep(NA, p)
+#b <- rep(NA, p)
+
+x_cols = colnames(x, do.NULL = FALSE, prefix = "x.")
+for (i in 1:p) {
+    para <- coef(regmodel, id = i)
+    errors[i] <- sqrt(sum((b[x_cols %in% names(para)] - para[names(para) %in% x_cols])^2) + sum(b[!(x_cols %in% names(para))])^2)
+}
+
+plot(errors)
+which.min(errors)
+```
+
+
+The error goes down to 5 and then flats when it is bigger than 11.
+
+
+
+
+
+
+
+
+
+
+
